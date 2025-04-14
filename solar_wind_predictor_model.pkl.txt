@@ -1,0 +1,132 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import joblib
+from google.colab import files
+
+# 📂 อัปโหลดไฟล์ CSV
+uploaded = files.upload()
+
+# 📄 โหลดข้อมูล
+df = pd.read_csv('solarwind.csv')
+print("คอลัมน์ทั้งหมด:", df.columns.tolist())
+
+# 🧹 เปลี่ยนชื่อคอลัมน์ให้เรียกง่าย
+df = df.rename(columns={
+    'BZ, nT (GSM)': 'Bz',
+    'SW Plasma Speed, km/s': 'Speed',
+    'SW Proton Density, N/cm^3': 'Density',
+    'Kp index': 'Kp'
+})
+
+# ⚙️ เพิ่มฟีเจอร์ใหม่
+df['Speed_Density_Ratio'] = df['Speed'] / (df['Density'] + 1e-6)  # ป้องกันหารศูนย์
+df['Bz_Squared'] = df['Bz'] ** 2
+df['Energy_Flux'] = (df['Speed'] ** 2) * df['Density']
+
+# 🎯 แยกฟีเจอร์กับเป้าหมาย
+feature_cols = ['Bz', 'Speed', 'Density', 'Speed_Density_Ratio', 'Bz_Squared', 'Energy_Flux']
+X = df[feature_cols]
+y = df['Kp']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 🔍 ค้นหาพารามิเตอร์ที่ดีที่สุด
+param_grid = {
+    'n_estimators': [100, 200],
+    'max_depth': [10, 20, None],
+    'min_samples_split': [2, 5]
+}
+
+grid_search = GridSearchCV(
+    RandomForestRegressor(random_state=42),
+    param_grid,
+    cv=5,
+    scoring='r2',
+    n_jobs=-1
+)
+grid_search.fit(X_train, y_train)
+
+best_model = grid_search.best_estimator_
+print("📌 Best Parameters:", grid_search.best_params_)
+
+# 🔮 พยากรณ์
+y_pred = best_model.predict(X_test)
+
+# 📊 กราฟเปรียบเทียบค่าจริงกับค่าพยากรณ์
+plt.figure(figsize=(10,5))
+plt.plot(y_test.values[:100], label='Actual Values')
+plt.plot(y_pred[:100], label='Predicted Values')
+plt.xlabel('Sample Index')
+plt.ylabel('Kp Index')
+plt.title('Comparison of Actual and Predicted Values')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 📈 กราฟการกระจาย
+plt.figure(figsize=(6,6))
+plt.scatter(y_test, y_pred)
+plt.xlabel('Actual Values (y_test)')
+plt.ylabel('Predicted Values (y_pred)')
+plt.title('Scatter Plot of Actual vs Predicted')
+plt.grid(True)
+plt.show()
+
+# ✅ แสดงผล Kp จริง กับ Kp ที่พยากรณ์ได้
+print("\nเปรียบเทียบ Kp จริง กับ Kp ที่พยากรณ์ได้ (ตัวอย่างบางส่วน):")
+for actual, predicted in zip(y_test.values[:20], y_pred[:20]):
+    print(f"Actual Kp: {actual:.2f}  |  Predicted Kp: {predicted:.2f}")
+
+# 📏 ค่าความแม่นยำ
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("\n📐 Mean Squared Error (MSE):", mse)
+print("📊 R² Score:", r2)
+
+# 💾 บันทึกโมเดล
+joblib.dump(best_model, 'solar_wind_predictor_model.pkl')
+print("\n✅ โมเดลที่ดีที่สุดถูกบันทึกเรียบร้อยแล้ว!")
+
+# 🔎 การพยากรณ์ใหม่
+new_data = pd.DataFrame([[-5, 350, 8]], columns=['Bz', 'Speed', 'Density'])
+new_data['Speed_Density_Ratio'] = new_data['Speed'] / (new_data['Density'] + 1e-6)
+new_data['Bz_Squared'] = new_data['Bz'] ** 2
+new_data['Energy_Flux'] = (new_data['Speed'] ** 2) * new_data['Density']
+
+loaded_model = joblib.load('solar_wind_predictor_model.pkl')
+prediction = loaded_model.predict(new_data)
+
+print("\n🔮 ค่าพยากรณ์ Kp สำหรับข้อมูลใหม่:", prediction)
+
+เปรียบเทียบ Kp จริง กับ Kp ที่พยากรณ์ได้ (ตัวอย่างบางส่วน):
+Actual Kp: 3.00  |  Predicted Kp: 10.03
+Actual Kp: 3.00  |  Predicted Kp: 15.96
+Actual Kp: 10.00  |  Predicted Kp: 10.29
+Actual Kp: 17.00  |  Predicted Kp: 24.69
+Actual Kp: 7.00  |  Predicted Kp: 19.34
+Actual Kp: 30.00  |  Predicted Kp: 30.17
+Actual Kp: 27.00  |  Predicted Kp: 26.97
+Actual Kp: 17.00  |  Predicted Kp: 17.69
+Actual Kp: 33.00  |  Predicted Kp: 27.35
+Actual Kp: 40.00  |  Predicted Kp: 38.60
+Actual Kp: 13.00  |  Predicted Kp: 9.70
+Actual Kp: 33.00  |  Predicted Kp: 27.41
+Actual Kp: 40.00  |  Predicted Kp: 35.24
+Actual Kp: 17.00  |  Predicted Kp: 13.05
+Actual Kp: 7.00  |  Predicted Kp: 13.46
+Actual Kp: 10.00  |  Predicted Kp: 20.30
+Actual Kp: 30.00  |  Predicted Kp: 14.46
+Actual Kp: 7.00  |  Predicted Kp: 15.74
+Actual Kp: 7.00  |  Predicted Kp: 11.42
+Actual Kp: 30.00  |  Predicted Kp: 41.15
+
+📐 Mean Squared Error (MSE): 67.28885370808153
+📊 R² Score: 0.6122877826469642
+
+✅ โมเดลที่ดีที่สุดถูกบันทึกเรียบร้อยแล้ว!
+
+🔮 ค่าพยากรณ์ Kp สำหรับข้อมูลใหม่: [24.66334586]
