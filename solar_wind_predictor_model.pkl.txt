@@ -101,32 +101,3 @@ loaded_model = joblib.load('solar_wind_predictor_model.pkl')
 prediction = loaded_model.predict(new_data)
 
 print("\n🔮 ค่าพยากรณ์ Kp สำหรับข้อมูลใหม่:", prediction)
-
-เปรียบเทียบ Kp จริง กับ Kp ที่พยากรณ์ได้ (ตัวอย่างบางส่วน):
-Actual Kp: 3.00  |  Predicted Kp: 10.03
-Actual Kp: 3.00  |  Predicted Kp: 15.96
-Actual Kp: 10.00  |  Predicted Kp: 10.29
-Actual Kp: 17.00  |  Predicted Kp: 24.69
-Actual Kp: 7.00  |  Predicted Kp: 19.34
-Actual Kp: 30.00  |  Predicted Kp: 30.17
-Actual Kp: 27.00  |  Predicted Kp: 26.97
-Actual Kp: 17.00  |  Predicted Kp: 17.69
-Actual Kp: 33.00  |  Predicted Kp: 27.35
-Actual Kp: 40.00  |  Predicted Kp: 38.60
-Actual Kp: 13.00  |  Predicted Kp: 9.70
-Actual Kp: 33.00  |  Predicted Kp: 27.41
-Actual Kp: 40.00  |  Predicted Kp: 35.24
-Actual Kp: 17.00  |  Predicted Kp: 13.05
-Actual Kp: 7.00  |  Predicted Kp: 13.46
-Actual Kp: 10.00  |  Predicted Kp: 20.30
-Actual Kp: 30.00  |  Predicted Kp: 14.46
-Actual Kp: 7.00  |  Predicted Kp: 15.74
-Actual Kp: 7.00  |  Predicted Kp: 11.42
-Actual Kp: 30.00  |  Predicted Kp: 41.15
-
-📐 Mean Squared Error (MSE): 67.28885370808153
-📊 R² Score: 0.6122877826469642
-
-✅ โมเดลที่ดีที่สุดถูกบันทึกเรียบร้อยแล้ว!
-
-🔮 ค่าพยากรณ์ Kp สำหรับข้อมูลใหม่: [24.66334586]
